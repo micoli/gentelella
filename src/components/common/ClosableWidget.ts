@@ -13,7 +13,7 @@ import { Vue, Component, Prop, Provide } from 'vue-property-decorator';
 			<div class="x_title">
 				<h2>{{ title }}</h2>
 				<ul class="nav navbar-right panel_toolbox">
-					<li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+					<li><a @click="collapse" class="collapse-link"><i class="fa fa-chevron-up"></i></a>
 					</li>
 					<li class="dropdown">
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-wrench"></i></a>
@@ -24,7 +24,7 @@ import { Vue, Component, Prop, Provide } from 'vue-property-decorator';
 							</li>
 						</ul>
 					</li>
-					<li><a class="close-link"><i class="fa fa-close"></i></a>
+					<li><a @click="close" class="close-link"><i class="fa fa-close"></i></a>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
@@ -49,9 +49,25 @@ export default class ClosableWidget extends Vue {
 			heightClasses:['x_panel','tile',this.heightClass]
 		};
 	}
-	mounted () {
+
+	collapse(el:any){
+		var $BOX_PANEL = $(el.target).closest('.x_panel'),
+			$ICON = $(el.target).find('i'),
+			$BOX_CONTENT = $BOX_PANEL.find('.x_content');
+
+		// fix for some div with hardcoded fix class
+		if ($BOX_PANEL.attr('style')) {
+			$BOX_CONTENT.slideToggle(200, function(){
+				$BOX_PANEL.removeAttr('style');
+			});
+		} else {
+			$BOX_CONTENT.slideToggle(200);
+			$BOX_PANEL.css('height', 'auto');
+		}
+		$ICON.toggleClass('fa-chevron-up fa-chevron-down');
 	}
 
-	destroyed () {
+	close (el:any) {
+        $(el.target).closest('.x_panel').remove();
 	}
 }

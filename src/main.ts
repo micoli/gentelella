@@ -3,6 +3,7 @@
 import './vendor';
 import './services/EventHub';
 import Vue from 'vue';
+import VueRouter from 'vue-router';
 
 import ClosableWidget from './components/common/ClosableWidget';
 import ProfileQuickInfo from './components/menu/ProfileQuickInfo';
@@ -14,9 +15,11 @@ import TitleProgressBar from './components/homepage/TitleProgressBar';
 import TitleProgressValue from './components/homepage/TitleProgressValue';
 import TitleStatCount from './components/homepage/TitleStatCount';
 import Homepage from './components/homepage/Homepage';
+import Homepage2 from './components/homepage/Homepage2';
 
 
 Vue.config.productionTip = false;
+Vue.use(VueRouter)
 
 new Vue({
 	el: '#app',
@@ -29,7 +32,13 @@ new Vue({
 		Homepage,
 		TitleStatCount,
 		TitleProgressBar,
-		TitleProgressValue,
-
-	}
+		TitleProgressValue
+	},
+	router : new VueRouter({
+		routes : [{
+			path: '/', component: Homepage
+		},{
+			path: '/dashboard-2', component: Homepage2
+		}]
+	})
 });

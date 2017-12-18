@@ -9,8 +9,8 @@ import { Vue, Component,Provide } from 'vue-property-decorator';
 			<ul class="nav side-menu">
 				<li><a><i class="fa fa-home"></i> Home <span class="fa fa-chevron-down"></span></a>
 					<ul class="nav child_menu">
-						<li><a href="index.html">Dashboard</a></li>
-						<li><a href="index2.html">Dashboard2</a></li>
+						<li><router-link to="/">Dashboard</router-link></li>
+						<li><router-link to="/dashboard-2">Dashboard2</router-link></li>
 						<li><a href="index3.html">Dashboard3</a></li>
 					</ul>
 				</li>

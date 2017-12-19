@@ -28,7 +28,7 @@ export default class TitleProgressBar extends Vue {
 	mounted () {
 		let self = this;
 		setTimeout(function(){
-			$('.progress .progress-bar',self.$el).progressbar();
+			//$('.progress .progress-bar',self.$el).progressbar();
 		},200)
 	}
 }

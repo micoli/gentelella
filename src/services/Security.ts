@@ -1,4 +1,6 @@
 import Vue from 'vue';
+import {VueConstructor} from 'vue/types/vue';
+import {PluginObject,PluginFunction} from 'vue/types/plugin';
 import axios from 'axios';
 import { LocalStorage }  from './LocalStorage';
 import { Constants } from './Security/Constants';
@@ -7,61 +9,84 @@ var jwt = require('jsonwebtoken');
 //import VueLocalStorage from 'vue-localstorage'
 //Vue.use(VueLocalStorage);
 
+//plugin
+const Security = {
+	install(vue: VueConstructor, options: any) {
+		StaticSecurity.init(vue)
+	}
+}
+export default Security;
 
-export default class Security {
-	private static _rightNotConnected:any;
-	private static _currentIdentity:any;
-	private static _authenticated:any ;
-	private static vue:Vue;
-	private static jwtPrivateKey:string;
+Vue.mixin({
+	data: function () {
+        return {
+            security: StaticSecurity
+        }
+    }
+});
+
+export class StaticSecurity  {
+	private static _rightNotConnected: any;
+	private static _currentIdentity: any;
+	private static _authenticated: boolean ;
+	private static vue: any;
+	private static jwtPrivateKey: string;
+	private static returnToRoute: any;
 
 	static userToken: string= '';
 
-	static init(vue:Vue){
-		this.vue = vue;
+	static init(vue:any){
+		let self = StaticSecurity;
+		self.vue = vue;
 		axios.defaults.baseURL = '/api';
 		axios.defaults.headers.common['Authorization'] = 'Bearer ';
-		this.jwtPrivateKey='ghjfgdsjh fydusifgkbez;gdsbv,vfdshjfgdsgfzefèç!èygrék';
-		this.initInterceptor()
+		self.jwtPrivateKey='ghjfgdsjh fydusifgkbez;gdsbv,vfdshjfgdsgfzefèç!èygrék';
+		self.initInterceptor()
 	}
 	static isIdentityResolved (){
-		return this._currentIdentity !== null;
+		let self = StaticSecurity;
+		return !(self._currentIdentity == null);
 	}
 
 	static isAuthenticated (){
-		return this._authenticated !== null;
+		let self = StaticSecurity;
+		return self._authenticated;
 	}
 
 	static isInAnyRights (rights:any) {
+		let self = StaticSecurity;
 		var i,j;
 		rights = Array.isArray(rights) ? rights : [ rights ];
 		if (arguments.length > 1)
 		for (i = 1; i < arguments.length; i++) rights.push(arguments[i]);
 		try {
-			if (!this._authenticated || !this._currentIdentity.hasOwnProperty("config")) return false;
-			if (!this._currentIdentity.config.hasOwnProperty("rights")) return false;
+			if (!self._authenticated || !self._currentIdentity.hasOwnProperty("config")) return false;
+			if (!self._currentIdentity.config.hasOwnProperty("rights")) return false;
 		} catch (e) {
 			return false;
 		}
 		for (j = 0; j < rights.length; j++)
-		if (this._currentIdentity.config.rightSa[rights[j]]) return true;
+		if (self._currentIdentity.config.rightSa[rights[j]]) return true;
 		return false;
 	};
 
 	static removeAuthenticate (){
-		this._currentIdentity = null;
-		this._authenticated = null;
-		this.setTokenId(null);
+		let self = StaticSecurity;
+		self._currentIdentity = null;
+		self._authenticated = false;
+		self.setTokenId(null);
 		LocalStorage.removeItem("token");
 	};
 
 	static initTokenId (token:any) {
-		this.userToken = token;
+		let self = StaticSecurity;
+		self.userToken = token;
 		axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
 	}
 
 	static setTokenId (token:any) {
-		this.initTokenId(token);
+		let self = StaticSecurity;
+		self.initTokenId(token);
 		LocalStorage.setItem("token", token);
 	}
 
@@ -74,9 +99,9 @@ export default class Security {
 	}
 
 	static checkAndLoadIdentity (){
-		var self = this;
+		var self = StaticSecurity;
 		return new Promise((resolve, reject) => {
-			if (self._currentIdentity !== null) {
+			if (!(self._currentIdentity == null)) {
 				resolve(self._currentIdentity);
 				return;
 			}
@@ -92,20 +117,20 @@ export default class Security {
 					self.setIdentity(token)
 					resolve(self._currentIdentity);
 				},function() {
-					reject(null);
+					resolve(null);
 				});
 			} else {
-				reject();
+				resolve(null);
 			}
 		});
 	}
 
 	static getCurrentIdentity (){
-		return this._currentIdentity;
+		return StaticSecurity._currentIdentity;
 	}
 
-	static login (credentials:any) {
-		var self = this;
+	public static login (credentials:any) {
+		var self = StaticSecurity;
 		self._currentIdentity = null;
 		self._authenticated = false;
 		return axios.post("api/users/login",{
@@ -132,10 +157,11 @@ export default class Security {
 	}
 
 	static logout (){
-		this._currentIdentity = null;
-		this.vue.$root.$emit('authentication:logout', {identity:this._currentIdentity});
-		this._authenticated = false;
-		this.clearTokenId();
+		var self = StaticSecurity;
+		self._currentIdentity = null;
+		self.vue.$root.$emit('authentication:logout', {identity: self._currentIdentity});
+		self._authenticated = false;
+		self.clearTokenId();
 	}
 
 	static isSessionAuthenticated (){
@@ -143,24 +169,25 @@ export default class Security {
 	}
 
 	static setIdentity (token:any) {
-		this._currentIdentity = jwt.decode(token,this.jwtPrivateKey);
-		this.vue.$root.$emit('authentication:login', {identity:this._currentIdentity,token:token});
-		this._authenticated = true;
-		this.setTokenId(token);
+		var self = StaticSecurity;
+		self._currentIdentity = jwt.decode(token,self.jwtPrivateKey);
+		self.vue.$root.$emit('authentication:login', {identity:self._currentIdentity,token:token});
+		self._authenticated = true;
+		self.setTokenId(token);
 	}
 
 	static initInterceptor(){
-		var self = this;
+		var self = StaticSecurity;
 
-		axios.interceptors.request.use(function (config) {
+		axios.interceptors.request.use(function (config:any) {
 			return config;
-		}, function (error) {
+		}, function (error:any) {
 			return Promise.reject(error);
 		});
 
 		axios.interceptors.response.use(function (response:any) {
 			return response;
-		}, function (response) {
+		}, function (response:any) {
 			if (response.data){
 				if (response.data.hasOwnProperty("class") && /AccessDeniedException$/.test(response.data.class)) {
 					self.vue.$root.$emit("secureArea:ressourceDenied", {
@@ -184,6 +211,21 @@ export default class Security {
 			return Promise.reject(response);
 		});
 	}
+
+	public static authorize (vm:any,to : any, next: any, rights: any) {
+		var self = StaticSecurity;
+		return self
+		.checkAndLoadIdentity()
+		.then(function() {
+			if (self.isAuthenticated() && rights && rights.length > 0 && !self.isInAnyRights(rights)) {
+				vm.$router.replace('accessdenied')
+			} else if (!self.isAuthenticated()) {
+				self.returnToRoute = next;
+				vm.$router.replace('/auth');
+			}
+		});
+	}
+
 }
 
 /*
@@ -192,21 +234,6 @@ export default class Security {
 
 .factory("authentication.authorization", [ "$rootScope", "$state", "authentication.authService", function($rootScope, $state, authService) {
 	return {
-		authorize : function() {
-			return authService.checkAndLoadIdentity().then(function() {
-				var isAuthenticated = authService.isAuthenticated();
-				$rootScope.toState.data = $rootScope.toState.data || {};
-				if ($rootScope.toState.data.rights && $rootScope.toState.data.rights.length > 0 && !authService.isInAnyRights($rootScope.toState.data.rights)) {
-					if (isAuthenticated) {
-						$state.go("accessdenied")
-					}
-				} else if (!isAuthenticated) {
-					$rootScope.returnToState = $rootScope.toState;
-					$rootScope.returnToStateParams = $rootScope.toStateParams;
-					$state.go("signin");
-				}
-			});
-		},
 		redirectifAuthenticated : function() {
 			return authService.checkAndLoadIdentity().then(function() {
 				if (authService.isAuthenticated()) {
@@ -217,27 +244,6 @@ export default class Security {
 	};
 } ])
 .service("authentication.authInterceptor", [ "$rootScope", "$q", "authentication.AUTH_EVENTS", function($rootScope, $q, AUTH_EVENTS) {
-	this.responseError = function(response) {
-		if (response.data)
-			if (response.data.hasOwnProperty("class") && /AccessDeniedException$/.test(response.data.class)) {
-				Vue.$root.$emit("secureArea:ressourceDenied", {
-					message : response.data.message
-				});
-				return $q.reject(response);
-		}
-		if (response.config && !/\/auth\/validate$/.test(response.config.url)) {
-			var event = {
-				401 : AUTH_EVENTS.notAuthenticated,
-				403 : AUTH_EVENTS.notAuthorized,
-				419 : AUTH_EVENTS.sessionTimeout,
-				440 : AUTH_EVENTS.sessionTimeout
-			}[response.status];
-			if (event) Vue.$root.$emit(event, response);
-		}
-		return $q.reject(response);
-	};
-	return this;
-} ])
 .controller("authentication.accessdeniedController", [ "$scope", "$stateParams", function($scope, $stateParams) {
 	if ($stateParams.message !== null) {
 		$scope.message = $stateParams.message;

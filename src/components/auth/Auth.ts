@@ -82,6 +82,9 @@ export default class Auth extends Vue {
 	rememberCredentials:boolean=true;
 	error:string =  '';
 
+	lostPassword(){
+	}
+
 	login(){
 		var credentials = {
 			username: this.credentials.username.toLowerCase(),
@@ -99,11 +102,14 @@ export default class Auth extends Vue {
 				} else {
 					LocalStorage.removeItem("credentials");
 				}
-				/*if ($scope.returnToState && "signin" != $scope.returnToState.name) {
-					$state.go($scope.returnToState.name, $scope.returnToStateParams)
+				eval('debugger')
+				if (this.security.returnToRouteName !=="auth") {
+					console.log('logged next');
+					this.security.returnToRoute()
 				} else {
-					$state.go("dash");
-				}*/
+					console.log('logged root');
+					this.$router.replace("/");
+				}
 			}, function(e:any) {
 				//$scope.data.errorMessage = e;
 			}).catch(function(data: any) {

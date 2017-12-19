@@ -38,12 +38,12 @@ var vm = new Vue({
 		routes : [{
 			path: '/', component: Homepage
 		},{
-			path: '/auth', component: Auth
+			path: '/auth', component: Auth, name: 'auth'
 		},{
 			path: '/dashboard-2',
 			component: Homepage2,
 			beforeEnter : function (to, from, next){
-				(<any>vm).security.authorize(vm,[''],to,next);
+				(<any>vm).security.authorize(vm,['*'],to,next);
 			}
 		}]
 	})

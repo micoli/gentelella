@@ -32,13 +32,14 @@ export class StaticSecurity  {
 	private static vue: any;
 	private static jwtPrivateKey: string;
 	private static returnToRoute: any;
+	private static returnToRouteName: any='';
 
 	static userToken: string= '';
 
 	static init(vue:any){
 		let self = StaticSecurity;
 		self.vue = vue;
-		axios.defaults.baseURL = '/api';
+		axios.defaults.baseURL = 'http://localhost:5000/api';
 		axios.defaults.headers.common['Authorization'] = 'Bearer ';
 		self.jwtPrivateKey='ghjfgdsjh fydusifgkbez;gdsbv,vfdshjfgdsgfzefèç!èygrék';
 		self.initInterceptor()
@@ -57,16 +58,24 @@ export class StaticSecurity  {
 		let self = StaticSecurity;
 		var i,j;
 		rights = Array.isArray(rights) ? rights : [ rights ];
-		if (arguments.length > 1)
-		for (i = 1; i < arguments.length; i++) rights.push(arguments[i]);
+		if (arguments.length > 1){
+			for (i = 1; i < arguments.length; i++) {
+				rights.push(arguments[i]);
+			}
+		}
 		try {
 			if (!self._authenticated || !self._currentIdentity.hasOwnProperty("config")) return false;
 			if (!self._currentIdentity.config.hasOwnProperty("rights")) return false;
 		} catch (e) {
 			return false;
 		}
-		for (j = 0; j < rights.length; j++)
-		if (self._currentIdentity.config.rightSa[rights[j]]) return true;
+		if(self._currentIdentity.config.rights){
+			for (j = 0; j < rights.length; j++){
+				if (self._currentIdentity.config.rights.indexOf(rights[j])!==-1 || rights[j]=='*'){
+					return true;
+				}
+			}
+		}
 		return false;
 	};
 
@@ -112,7 +121,7 @@ export class StaticSecurity  {
 				self.initTokenId(token);
 
 				axios
-				.get("/api/users/info")
+				.get("/users/info")
 				.then(function(res:any) {
 					self.setIdentity(token)
 					resolve(self._currentIdentity);
@@ -133,7 +142,7 @@ export class StaticSecurity  {
 		var self = StaticSecurity;
 		self._currentIdentity = null;
 		self._authenticated = false;
-		return axios.post("api/users/login",{
+		return axios.post("users/login",{
 			email : credentials.username,
 			password : credentials.password,
 		}).then(function(res:any) {
@@ -141,7 +150,7 @@ export class StaticSecurity  {
 				try {
 					if (res.data.success) {
 						self.setIdentity(res.data.token);
-						resolve(res.data.id)
+						resolve(res.data.token)
 					} else {
 						reject(res.data.message);
 					}
@@ -159,19 +168,19 @@ export class StaticSecurity  {
 	static logout (){
 		var self = StaticSecurity;
 		self._currentIdentity = null;
-		self.vue.$root.$emit('authentication:logout', {identity: self._currentIdentity});
+		///self.vue.$root.$emit('authentication:logout', {identity: self._currentIdentity});
 		self._authenticated = false;
 		self.clearTokenId();
 	}
 
 	static isSessionAuthenticated (){
-		return axios.post("/api/users/info");
+		return axios.post("/users/info");
 	}
 
 	static setIdentity (token:any) {
 		var self = StaticSecurity;
 		self._currentIdentity = jwt.decode(token,self.jwtPrivateKey);
-		self.vue.$root.$emit('authentication:login', {identity:self._currentIdentity,token:token});
+		///self.vue.$root.$emit('authentication:login', {identity:self._currentIdentity,token:token});
 		self._authenticated = true;
 		self.setTokenId(token);
 	}
@@ -212,16 +221,19 @@ export class StaticSecurity  {
 		});
 	}
 
-	public static authorize (vm:any,to : any, next: any, rights: any) {
+	public static authorize (vm:any,rights: string[],to : any, next: any) {
 		var self = StaticSecurity;
 		return self
 		.checkAndLoadIdentity()
 		.then(function() {
 			if (self.isAuthenticated() && rights && rights.length > 0 && !self.isInAnyRights(rights)) {
-				vm.$router.replace('accessdenied')
+				vm.$router.replace('/accessdenied')
 			} else if (!self.isAuthenticated()) {
+				self.returnToRouteName=to.name|| to.fullPath;
 				self.returnToRoute = next;
 				vm.$router.replace('/auth');
+			}else{
+				next();
 			}
 		});
 	}
@@ -274,7 +286,7 @@ export class StaticSecurity  {
 	$scope.auth = function(provider){
 		return $http({
 			method : "GET",
-			url : "/api/auth/" + provider
+			url : "/auth/" + provider
 		}).then(function(res) {
 			if (res.data.success) {
 				window.location=res.data.redirect;
@@ -325,7 +337,7 @@ export class StaticSecurity  {
 			credentials.username = credentials.username.toLowerCase();
 			return $http({
 				method : "POST",
-				url : "/api/users",
+				url : "/users",
 				data : {
 					name : credentials.username,
 					email : credentials.username,

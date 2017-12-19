@@ -172,7 +172,7 @@ export module LocalStorage {
         }
     }
 	export function setItem(key:string,item:any){
-		return localStorage.set(key, item);
+		return localStorage.setItem(key, item);
 	}
 
 	export function removeItem(item:string){

@@ -17,6 +17,7 @@ import TitleStatCount from './components/homepage/TitleStatCount';
 import Homepage from './components/homepage/Homepage';
 import Homepage2 from './components/homepage/Homepage2';
 import Auth from './components/auth/Auth';
+import App from './App';
 
 Vue.mixin({
 	data: function () {
@@ -29,9 +30,40 @@ Vue.mixin({
 Vue.config.productionTip = false;
 Vue.use(VueRouter)
 
+var router = new VueRouter({
+	routes : [{
+		path: '/',
+		component: Homepage
+	},{
+		path: '/auth',
+		name: 'auth',
+		components:{
+			standalone : Auth
+		}
+	},{
+		path: '/dashboard-2',
+		component: Homepage2,
+		meta:{
+			rights : ['*']
+		}
+		//beforeEnter : function (to, from, next){
+			//Vue.nextTick(function () {});
+
+		//}
+	}]
+});
+router.beforeEach((to, from, next) => {
+	if (to.matched.some(record => record.meta.rights)) {
+		SecurityService.authorize(to.meta.rights,to,next);
+	}else{
+		next();
+	}
+});
+
 var vm = new Vue({
 	el: '#app',
 	components: {
+		//App,
 		ProfileQuickInfo,
 		ProfileMenu,
 		SideMenu,
@@ -46,19 +78,5 @@ var vm = new Vue({
 	created: function () {
 		SecurityService.init(this);
    },
-	router : new VueRouter({
-		routes : [{
-			path: '/', component: Homepage
-		},{
-			path: '/auth', component: Auth, name: 'auth'
-		},{
-			path: '/dashboard-2',
-			component: Homepage2,
-			beforeEnter : function (to, from, next){
-				//Vue.nextTick(function () {
-					SecurityService.authorize(['*'],to,next);
-				//});
-			}
-		}]
-	})
+	router : router
 });

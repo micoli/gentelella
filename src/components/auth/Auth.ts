@@ -11,6 +11,7 @@ import {LocalStorage} from '../../services/LocalStorage';
 		<div class="login_wrapper">
 			<div class="animate form login_form" style="position:relative">
 				<section class="login_content">
+				--{{mode}}--
 					<form @submit="login">
 						<h1>Login Form</h1>
 						<div>

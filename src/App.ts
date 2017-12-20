@@ -1,7 +1,8 @@
 import { Vue, Component } from 'vue-property-decorator';
 
 @Component({
-	components: { },
+	template: `
+	`
 })
 export default class App extends Vue {
 }

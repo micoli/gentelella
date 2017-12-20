@@ -10,6 +10,7 @@ import ProfileQuickInfo from './components/menu/ProfileQuickInfo';
 import ProfileMenu from './components/menu/ProfileMenu';
 import SideMenu from './components/menu/SideMenu';
 import TopMenuToggle from './components/menu/TopMenuToggle';
+import ProfileMessagesMenu from './components/menu/ProfileMessagesMenu';
 
 import TitleProgressBar from './components/homepage/TitleProgressBar';
 import TitleProgressValue from './components/homepage/TitleProgressValue';

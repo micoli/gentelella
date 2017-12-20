@@ -9,9 +9,8 @@ import {LocalStorage} from '../../services/LocalStorage';
 		<a class="hiddenanchor" id="signin"></a>
 
 		<div class="login_wrapper">
-			<div class="animate form login_form" style="position:relative">
+			<div class="animate form login_form">
 				<section class="login_content">
-				--{{mode}}--
 					<form @submit="login">
 						<h1>Login Form</h1>
 						<div>

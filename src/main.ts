@@ -22,10 +22,10 @@ import App from './App';
 
 Vue.mixin({
 	data: function () {
-        return {
-            security: SecurityService
-        }
-    }
+		return {
+			security: SecurityService
+		}
+	}
 });
 
 Vue.config.productionTip = false;
@@ -44,22 +44,22 @@ var router = new VueRouter({
 	},{
 		path: '/dashboard-2',
 		component: Homepage2,
-		meta:{
+		meta : {
 			rights : ['*']
-		}
-		//beforeEnter : function (to, from, next){
+		},
+		beforeEnter : function (to, from, next){
 			//Vue.nextTick(function () {});
-
-		//}
+			SecurityService.authorize(to.meta.rights,to,next);
+		}
 	}]
 });
-router.beforeEach((to, from, next) => {
+/*router.beforeEach((to, from, next) => {
 	if (to.matched.some(record => record.meta.rights)) {
 		SecurityService.authorize(to.meta.rights,to,next);
 	}else{
 		next();
 	}
-});
+});*/
 
 var vm = new Vue({
 	el: '#app',

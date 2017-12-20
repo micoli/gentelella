@@ -17,8 +17,8 @@ export class SecurityService  {
 	private static _authenticated: boolean ;
 	private static vue: any;
 	private static jwtPrivateKey: string;
-	public static returnToRoute: any;
-	public static returnToRouteName: any='';
+	private static returnToRoute: any;
+	private static returnToRouteName: any='';
 
 	static userToken: string= '';
 
@@ -208,139 +208,31 @@ export class SecurityService  {
 		return self
 		.checkAndLoadIdentity()
 		.then(function() {
-			if (self.isAuthenticated() && rights && rights.length > 0 && !self.isInAnyRights(rights)) {
-				self.vue.$router.replace('/accessdenied')
-			} else if (!self.isAuthenticated()) {
+			self.returnToRouteName = '';
+			self.returnToRoute = null;
+			if (!self.isAuthenticated()) {
+				//not yet authenticated
 				self.returnToRouteName = to.name|| to.fullPath;
-				self.returnToRoute = next;
+				self.returnToRoute = function(){
+					next(to);
+				}
 				self.vue.$router.replace('/auth');
+			} else if (self.isAuthenticated() && rights && rights.length > 0 && !self.isInAnyRights(rights)) {
+				//authenticated and not allowed
+				self.vue.$router.replace('/accessdenied')
 			}else{
+				//authenticated and allowed
 				next();
 			}
 		});
 	}
 
-	public static go(route: string){
-		var self = SecurityService;
-		self.vue.$router.replace(route);
+	public static finishAuth(){
+		let self = SecurityService;
+		if (self.returnToRouteName ==="auth" || self.returnToRouteName == "") {
+			self.vue.$router.replace("/");
+		} else {
+			self.returnToRoute()
+		}
 	}
 }
-
-/*
-
-//.factory("authentication.authService", [ "$q", "$http", "$timeout", "$rootScope", "$location", "$state", "localStorageService", "jwtHelper", function($q, $http, $timeout, $rootScope, $location, $state, localStorageService, jwtHelper) {
-
-.factory("authentication.authorization", [ "$rootScope", "$state", "authentication.authService", function($rootScope, $state, authService) {
-	return {
-		redirectifAuthenticated : function() {
-			return authService.checkAndLoadIdentity().then(function() {
-				if (authService.isAuthenticated()) {
-					$state.go("dash");
-				}
-			});
-		}
-	};
-} ])
-.service("authentication.authInterceptor", [ "$rootScope", "$q", "authentication.AUTH_EVENTS", function($rootScope, $q, AUTH_EVENTS) {
-.controller("authentication.accessdeniedController", [ "$scope", "$stateParams", function($scope, $stateParams) {
-	if ($stateParams.message !== null) {
-		$scope.message = $stateParams.message;
-	}
-} ])
-.controller("authentication.authCallbackController", [ "$scope", "$stateParams", "$state", "authentication.authService", function($scope, $stateParams, $state, authService) {
-	if ($stateParams.token !== null) {
-		authService.setIdentity($stateParams.token);
-		$state.go("dash");
-	}
-} ])
-.controller("authentication.signinController", [ "$rootScope", "$scope", "$state", "$http", "localStorageService", "authentication.authService", "$location", function($rootScope, $scope, $state, $http, localStorageService, authService, $location) {
-	$scope.data = {
-		mode : 'login',
-		message : '',
-		errorMessage : '',
-		rememberCredentials : false
-	};
-
-	var cred = localStorageService.get("credentials");
-	$scope.credentials = cred ? cred : {
-		username : "",
-		password : ""
-	};
-	$scope.checkMail = function(mail) {
-		return new RegExp("^[0-9a-z._-]+@{1}[0-9a-z.-]{2,}[.]{1}[a-z]{2,10}$").test(mail);
-	};
-	$scope.auth = function(provider){
-		return $http({
-			method : "GET",
-			url : "/auth/" + provider
-		}).then(function(res) {
-			if (res.data.success) {
-				window.location=res.data.redirect;
-			} else {
-				$scope.data.message = '';
-				$scope.data.errorMessage = res.data.message;
-			}
-		}, function(res) {});
-
-	}
-	$scope.login = function(credentials) {
-		$scope.data.message = '';
-		$scope.data.errorMessage = '';
-		if (!credentials.username || !credentials.password) {
-			$scope.data.errorMessage = 'formulaire incomplet';
-		} else {
-			credentials.username = credentials.username.toLowerCase();
-			authService
-				.login(credentials)
-				.then(function(data) {
-					if ($scope.data.rememberCredentials && credentials.username && credentials.password) {
-						LocalStorage.set("credentials", {
-							username : credentials.username,
-							password : credentials.password
-						})
-					} else {
-						LocalStorage.remove("credentials");
-					}
-					if ($scope.returnToState && "signin" != $scope.returnToState.name) {
-						$state.go($scope.returnToState.name, $scope.returnToStateParams)
-					} else {
-						$state.go("dash");
-					}
-				}, function(e) {
-					$scope.data.errorMessage = e;
-				}).catch(function(data) {
-				$scope.loginError = true;
-			});
-		}
-	};
-
-	$scope.register = function(credentials) {
-		$scope.data.message = '';
-		$scope.data.errorMessage = '';
-		if (!credentials.username || !credentials.password) {
-			$scope.data.errorMessage = 'formulaire incomplet';
-		} else {
-			credentials.username = credentials.username.toLowerCase();
-			return $http({
-				method : "POST",
-				url : "/users",
-				data : {
-					name : credentials.username,
-					email : credentials.username,
-					password : credentials.password,
-				}
-			}).then(function(res) {
-				if (res.data.success) {
-					$scope.data.mode = 'login';
-					$scope.data.message = res.data.message;
-					$scope.data.errorMessage = '';
-				} else {
-					$scope.data.message = '';
-					$scope.data.errorMessage = res.data.message;
-				}
-			}, function(res) {});
-
-		}
-	};
-} ]);
-*/

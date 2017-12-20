@@ -10,34 +10,20 @@ var jwt = require('jsonwebtoken');
 //Vue.use(VueLocalStorage);
 
 //plugin
-const Security = {
-	install(vue: VueConstructor, options: any) {
-		StaticSecurity.init(vue)
-	}
-}
-export default Security;
 
-Vue.mixin({
-	data: function () {
-        return {
-            security: StaticSecurity
-        }
-    }
-});
-
-export class StaticSecurity  {
+export class SecurityService  {
 	private static _rightNotConnected: any;
 	private static _currentIdentity: any;
 	private static _authenticated: boolean ;
 	private static vue: any;
 	private static jwtPrivateKey: string;
-	private static returnToRoute: any;
-	private static returnToRouteName: any='';
+	public static returnToRoute: any;
+	public static returnToRouteName: any='';
 
 	static userToken: string= '';
 
 	static init(vue:any){
-		let self = StaticSecurity;
+		let self = SecurityService;
 		self.vue = vue;
 		axios.defaults.baseURL = 'http://localhost:5000/api';
 		axios.defaults.headers.common['Authorization'] = 'Bearer ';
@@ -45,17 +31,17 @@ export class StaticSecurity  {
 		self.initInterceptor()
 	}
 	static isIdentityResolved (){
-		let self = StaticSecurity;
+		let self = SecurityService;
 		return !(self._currentIdentity == null);
 	}
 
 	static isAuthenticated (){
-		let self = StaticSecurity;
+		let self = SecurityService;
 		return self._authenticated;
 	}
 
 	static isInAnyRights (rights:any) {
-		let self = StaticSecurity;
+		let self = SecurityService;
 		var i,j;
 		rights = Array.isArray(rights) ? rights : [ rights ];
 		if (arguments.length > 1){
@@ -80,7 +66,7 @@ export class StaticSecurity  {
 	};
 
 	static removeAuthenticate (){
-		let self = StaticSecurity;
+		let self = SecurityService;
 		self._currentIdentity = null;
 		self._authenticated = false;
 		self.setTokenId(null);
@@ -88,13 +74,13 @@ export class StaticSecurity  {
 	};
 
 	static initTokenId (token:any) {
-		let self = StaticSecurity;
+		let self = SecurityService;
 		self.userToken = token;
 		axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
 	}
 
 	static setTokenId (token:any) {
-		let self = StaticSecurity;
+		let self = SecurityService;
 		self.initTokenId(token);
 		LocalStorage.setItem("token", token);
 	}
@@ -108,7 +94,7 @@ export class StaticSecurity  {
 	}
 
 	static checkAndLoadIdentity (){
-		var self = StaticSecurity;
+		var self = SecurityService;
 		return new Promise((resolve, reject) => {
 			if (!(self._currentIdentity == null)) {
 				resolve(self._currentIdentity);
@@ -119,9 +105,8 @@ export class StaticSecurity  {
 			var token = self.getTokenId();
 			if (token) {
 				self.initTokenId(token);
-
 				axios
-				.get("/users/info")
+				.get("users/info")
 				.then(function(res:any) {
 					self.setIdentity(token)
 					resolve(self._currentIdentity);
@@ -135,11 +120,11 @@ export class StaticSecurity  {
 	}
 
 	static getCurrentIdentity (){
-		return StaticSecurity._currentIdentity;
+		return SecurityService._currentIdentity;
 	}
 
 	public static login (credentials:any) {
-		var self = StaticSecurity;
+		var self = SecurityService;
 		self._currentIdentity = null;
 		self._authenticated = false;
 		return axios.post("users/login",{
@@ -166,27 +151,23 @@ export class StaticSecurity  {
 	}
 
 	static logout (){
-		var self = StaticSecurity;
+		var self = SecurityService;
 		self._currentIdentity = null;
-		///self.vue.$root.$emit('authentication:logout', {identity: self._currentIdentity});
+		self.vue.$root.$emit('authentication:logout', {identity: self._currentIdentity});
 		self._authenticated = false;
 		self.clearTokenId();
 	}
 
-	static isSessionAuthenticated (){
-		return axios.post("/users/info");
-	}
-
 	static setIdentity (token:any) {
-		var self = StaticSecurity;
+		var self = SecurityService;
 		self._currentIdentity = jwt.decode(token,self.jwtPrivateKey);
-		///self.vue.$root.$emit('authentication:login', {identity:self._currentIdentity,token:token});
+		self.vue.$root.$emit('authentication:login', {identity:self._currentIdentity,token:token});
 		self._authenticated = true;
 		self.setTokenId(token);
 	}
 
 	static initInterceptor(){
-		var self = StaticSecurity;
+		var self = SecurityService;
 
 		axios.interceptors.request.use(function (config:any) {
 			return config;
@@ -221,23 +202,28 @@ export class StaticSecurity  {
 		});
 	}
 
-	public static authorize (vm:any,rights: string[],to : any, next: any) {
-		var self = StaticSecurity;
+	public static authorize (rights: string[],to : any, next: any ) {
+		var self = SecurityService;
+
 		return self
 		.checkAndLoadIdentity()
 		.then(function() {
 			if (self.isAuthenticated() && rights && rights.length > 0 && !self.isInAnyRights(rights)) {
-				vm.$router.replace('/accessdenied')
+				self.vue.$router.replace('/accessdenied')
 			} else if (!self.isAuthenticated()) {
-				self.returnToRouteName=to.name|| to.fullPath;
+				self.returnToRouteName = to.name|| to.fullPath;
 				self.returnToRoute = next;
-				vm.$router.replace('/auth');
+				self.vue.$router.replace('/auth');
 			}else{
 				next();
 			}
 		});
 	}
 
+	public static go(route: string){
+		var self = SecurityService;
+		self.vue.$router.replace(route);
+	}
 }
 
 /*

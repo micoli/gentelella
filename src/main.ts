@@ -4,9 +4,10 @@ import './vendor';
 import './services/EventHub';
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import Security from './services/Security';
+import { SecurityService /*,SecurityPlugin*/ } from './services/Security';
 import ClosableWidget from './components/common/ClosableWidget';
 import ProfileQuickInfo from './components/menu/ProfileQuickInfo';
+import ProfileMenu from './components/menu/ProfileMenu';
 import SideMenu from './components/menu/SideMenu';
 import TopMenuToggle from './components/menu/TopMenuToggle';
 
@@ -17,14 +18,22 @@ import Homepage from './components/homepage/Homepage';
 import Homepage2 from './components/homepage/Homepage2';
 import Auth from './components/auth/Auth';
 
+Vue.mixin({
+	data: function () {
+        return {
+            security: SecurityService
+        }
+    }
+});
+
 Vue.config.productionTip = false;
 Vue.use(VueRouter)
-Vue.use(Security);
 
 var vm = new Vue({
 	el: '#app',
 	components: {
 		ProfileQuickInfo,
+		ProfileMenu,
 		SideMenu,
 		TopMenuToggle,
 		ClosableWidget,
@@ -34,6 +43,9 @@ var vm = new Vue({
 		TitleProgressBar,
 		TitleProgressValue
 	},
+	created: function () {
+		SecurityService.init(this);
+   },
 	router : new VueRouter({
 		routes : [{
 			path: '/', component: Homepage
@@ -43,7 +55,9 @@ var vm = new Vue({
 			path: '/dashboard-2',
 			component: Homepage2,
 			beforeEnter : function (to, from, next){
-				(<any>vm).security.authorize(vm,['*'],to,next);
+				//Vue.nextTick(function () {
+					SecurityService.authorize(['*'],to,next);
+				//});
 			}
 		}]
 	})

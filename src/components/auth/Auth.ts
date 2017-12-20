@@ -1,5 +1,5 @@
 import { Vue, Component } from 'vue-property-decorator';
-import {StaticSecurity} from '../../services/Security';
+import {SecurityService} from '../../services/Security';
 import {LocalStorage} from '../../services/LocalStorage';
 
 @Component({
@@ -20,7 +20,7 @@ import {LocalStorage} from '../../services/LocalStorage';
 							<input type="password" class="form-control" placeholder="Password" required="" v-model="credentials.password" />
 						</div>
 						<div>
-							<button class="btn btn-default submit" @click="login">Log in</button>
+							<button type="submit" class="btn btn-default submit" @click="login">Log in</button>
 							<a class="reset_pass" @click="lostPassword">Lost your password?</a>
 						</div>
 
@@ -76,8 +76,8 @@ import {LocalStorage} from '../../services/LocalStorage';
 })
 export default class Auth extends Vue {
 	credentials:any= {
-		username: '',
-		password: ''
+		username: 'toto@titi.com',
+		password: 'toto'
 	};
 	rememberCredentials:boolean=true;
 	error:string =  '';
@@ -86,35 +86,36 @@ export default class Auth extends Vue {
 	}
 
 	login(){
-		var credentials = {
+		let self = this;
+		let credentials = {
 			username: this.credentials.username.toLowerCase(),
 			password: this.credentials.password
 		};
+		let securityService = (this.security as typeof SecurityService);
 
-		(this.security as typeof StaticSecurity)
+		securityService
 			.login(credentials)
 			.then(function(data: any) {
-				if (this.rememberCredentials && credentials.username && credentials.password) {
-					LocalStorage.setItem("credentials", {
+				if (self.rememberCredentials && credentials.username && credentials.password) {
+					LocalStorage.setItem("credentials", JSON.stringify({
 						username : credentials.username,
 						password : credentials.password
-					})
+					}));
 				} else {
 					LocalStorage.removeItem("credentials");
 				}
-				eval('debugger')
-				if (this.security.returnToRouteName !=="auth") {
-					console.log('logged next');
-					this.security.returnToRoute()
-				} else {
+				if (securityService.returnToRouteName ==="auth" || securityService.returnToRouteName == "") {
 					console.log('logged root');
-					this.$router.replace("/");
+					securityService.go("/");
+				} else {
+					console.log('logged next');
+					securityService.returnToRoute()
 				}
 			}, function(e:any) {
-				//$scope.data.errorMessage = e;
+				console.log('error',e);
 			}).catch(function(data: any) {
-			//$scope.loginError = true;
-		});
+				console.log('error',data);
+			});
 	}
 
 	destroyed () {

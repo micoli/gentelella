@@ -13,7 +13,7 @@ import '!style-loader!css-loader!bootstrap-daterangepicker/daterangepicker.css';
 import '!style-loader!css-loader!../static/build/css/custom.min.css';
 //import '../static/build/js/custom.min.js';
 
-import 'jquery/dist/jquery.min.js';
+//import 'jquery/dist/jquery.min.js';
 import 'bootstrap/dist/js/bootstrap.min.js';
 import 'fastclick/lib/fastclick.js';
 import 'nprogress/nprogress.js';
